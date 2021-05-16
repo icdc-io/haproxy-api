@@ -1,0 +1,39 @@
+###########################
+# TCP (Layer 4) Routes    #
+###########################
+defaults router:tcp_begin
+  timeout connect  10s
+  timeout client   110s
+  timeout server   120s
+  timeout tunnel   48h
+  timeout client-fin 1m
+  # Troubleshoot connection disruption
+  log     stdout daemon debug
+  option  tcplog
+  option  dontlognull
+  option  dontlog-normal
+
+<% @cfg.each do |r| %>
+<% nm = "router:tcp_#{r._id}" -%>
+frontend <%= nm %>
+<% bind = "bind *:#{r.port}" -%>
+  <%= bind %>
+  mode tcp
+<% backend_id = "backend_#{r.backend._id}" -%>
+  use_backend <%=backend_id%>
+
+backend backend_<%=r.backend._id%>
+  mode tcp
+<% r.backend.opts.each do |opt| -%>
+  <%=opt.name%> <%=opt.value%>
+<% end -%>
+<% r.backend.servers.each do |s| -%>
+<% w = " weight #{s.weight}" if s.weight -%>
+<% opts = s.opts.collect{|opt| " #{opt.name}" + (opt.value.nil? ? "" : " #{opt.value}") }.join() -%>
+  server server_<%=s._id%> <%=s.host%>:<%=s.port%> check<%=w%><%=opts%>
+<% end %>
+<% end -%>
+
+defaults router:tcp_end
+
+

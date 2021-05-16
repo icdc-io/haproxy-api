@@ -1,0 +1,16 @@
+[Unit]
+Description=IBA HAProxy API Service
+After=network.target
+
+[Service]
+WorkingDirectory=/var/www/haproxy_api
+Type=simple
+User=haproxyapi
+Group=haproxyapi
+ExecStart=/usr/bin/bash -lc 'rackup -o 0.0.0.0 -p 3000 -E production'
+TimeoutStartSec=15
+TimeoutStopSec=15
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

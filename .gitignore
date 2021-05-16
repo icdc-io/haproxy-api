@@ -1,0 +1,10 @@
+views/*.cfg
+.ssh/
+.cache/
+.viminfo
+.bash_history
+.byebug_history
+Gemfile.lock
+log/*.log
+.bundle/*
+config/config.yml

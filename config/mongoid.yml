@@ -1,0 +1,20 @@
+development:
+  clients:
+    default:
+      database: dev
+      hosts:
+        - localhost:27017
+      options:
+        truncate_logs: false
+production:
+  clients:
+    default:
+      database: prod
+      hosts:
+        - localhost:27017
+test:
+  clients:
+    default:
+      database: test
+      hosts:
+        - localhost:27017

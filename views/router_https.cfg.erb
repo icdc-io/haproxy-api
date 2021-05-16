@@ -1,0 +1,44 @@
+###########################
+# HTTPS (Layer 7) Routes  #
+###########################
+defaults router:https_begin
+  timeout connect  10s
+  timeout client   110s
+  timeout server   120s
+  # Troubleshoot connection disruption
+  log     stdout daemon debug
+  option  tcplog
+  option  dontlognull
+  option  dontlog-normal
+
+frontend router:https
+  bind *:443 ssl crt /etc/ssl/private/ alpn h2,http/1.1
+  mode http
+  http-request add-header X-Forwarded-Proto https
+  http-request set-header X-Forwarded-Host %[req.hdr(Host)]
+<% @cfg.each do |r| -%>
+<% acl_id = "acl_#{r._id}" -%>
+<% backend_id = "backend_#{r.backend._id}" -%>
+  acl <%=acl_id%> hdr(host) -i "<%=r.host%>"
+  use_backend <%=backend_id%> if <%=acl_id%>
+<% end -%>
+
+<% @cfg.each do |r| %>
+backend backend_<%=r.backend._id%>
+  mode http
+  option forwardfor
+<% r.backend.opts.each do |opt| -%>
+  <%=opt.name%> <%=opt.value%>
+<% end -%>
+<% option_https = " ssl verify none alpn h2,http/1.1" if r.backend.proto.downcase == "https" -%>
+<% option_http2 = " proto h2" if r.backend.proto.downcase == "http2" -%>
+<% r.backend.servers.each do |s| -%>
+<% w = " weight #{s.weight}" if s.weight -%>
+<% opts = s.opts.collect{|opt| " #{opt.name}" + (opt.value.nil? ? "" : " #{opt.value}") }.join() -%>
+  server server_<%=s._id%> <%=s.host%>:<%=s.port%> check<%=w%><%=option_https%><%=option_http2%><%=opts%>
+<% end -%>
+<% end -%>
+
+defaults router:https_end
+
+
